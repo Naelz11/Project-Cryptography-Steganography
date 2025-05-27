@@ -1,0 +1,29 @@
+from PyQt5.QtCore import QThread, pyqtSignal
+import random
+import logging
+
+class EnkripsiThread(QThread):
+    finished = pyqtSignal(dict)  # Signal untuk mengirim hasil enkripsi saat selesai
+    error = pyqtSignal(str)  # Signal untuk mengirim pesan error
+
+    def __init__(self, public_key, plaintext):
+        super().__init__()
+        self.public_key = public_key
+        self.plaintext = plaintext
+
+    def run(self):
+        try:
+            logging.debug("Mulai proses enkripsi di thread.")
+            # Implementasi enkripsi ElGamal
+            p, g, h = self.public_key
+            k = random.randint(1, p-2)
+            c1 = pow(g, k, p)
+            s = pow(h, k, p)
+            c2 = (self.plaintext * s) % p
+
+            encrypted_message = {'c1': c1, 'c2': c2}
+            logging.debug(f"Proses enkripsi selesai. Hasil: {encrypted_message}")
+            self.finished.emit(encrypted_message)
+        except Exception as e:
+            logging.error(f"Error saat enkripsi: {e}")
+            self.error.emit(f"Terjadi kesalahan saat enkripsi: {str(e)}")
